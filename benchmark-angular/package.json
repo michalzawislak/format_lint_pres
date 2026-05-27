@@ -1,0 +1,21 @@
+{
+  "name": "benchmark-angular",
+  "version": "1.0.0",
+  "description": "Benchmark project for testing formatters and linters",
+  "scripts": {
+    "format:prettier": "prettier --write \"src/**/*.{ts,html,scss}\"",
+    "format:biome": "biome format --write .",
+    "lint:eslint": "eslint \"src/**/*.ts\"",
+    "lint:biome": "biome lint .",
+    "benchmark:format": "bash ../benchmark-format.sh",
+    "benchmark:lint": "bash ../benchmark-lint.sh"
+  },
+  "devDependencies": {
+    "@angular/common": "^17.0.0",
+    "@angular/core": "^17.0.0",
+    "@biomejs/biome": "^2.4.15",
+    "prettier": "^3.8.3",
+    "rxjs": "^7.8.0",
+    "typescript": "^5.3.0"
+  }
+}

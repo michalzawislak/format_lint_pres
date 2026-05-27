@@ -1,0 +1,22 @@
+{
+  "name": "example-package",
+  "scripts": {
+    "format": "prettier --write \"src/**/*.{ts,html,scss,json}\"",
+    "format:biome": "biome format --write .",
+    "lint": "eslint src/**/*.ts --fix",
+    "check": "npm run format && npm run lint",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,html,scss,json}": [
+      "prettier --write"
+    ],
+    "*.ts": [
+      "eslint --fix --max-warnings=0"
+    ]
+  },
+  "devDependencies": {
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0"
+  }
+}

@@ -1,0 +1,99 @@
+.container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  h2 {
+    color: #333;
+    font-size: 24px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #4a9eff;
+    padding-bottom: 10px;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(0, 0, 0, 0.1);
+      border-radius: 50%;
+      border-top-color: #4a9eff;
+      animation: spin 1s ease-in-out infinite;
+    }
+  }
+
+  .error {
+    background: #fee;
+    color: #c00;
+    padding: 15px;
+    border-radius: 4px;
+    margin: 20px 0;
+    border-left: 4px solid #c00;
+  }
+
+  .content {
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+
+      &.btn-primary {
+        background: #4a9eff;
+        color: white;
+
+        &:hover {
+          background: #3080df;
+          transform: translateY(-2px);
+        }
+      }
+    }
+
+    .item-list {
+      list-style: none;
+      padding: 0;
+
+      .item {
+        padding: 15px;
+        margin: 10px 0;
+        background: #f5f5f5;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border-left: 3px solid transparent;
+
+        &:hover {
+          background: #e0e0e0;
+          transform: translateX(5px);
+          border-left-color: #4a9eff;
+        }
+
+        strong {
+          display: block;
+          margin-bottom: 5px;
+          color: #333;
+        }
+
+        p {
+          margin: 0;
+          color: #666;
+          font-size: 14px;
+        }
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

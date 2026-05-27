@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formatowanie i Lintowanie w 2026</title>
+  <link rel="stylesheet" href="/node_modules/reveal.js/dist/reset.css">
+  <link rel="stylesheet" href="/node_modules/reveal.js/dist/reveal.css">
+  <link rel="stylesheet" href="/node_modules/reveal.js/dist/theme/black.css">
+  <link rel="stylesheet" href="/node_modules/reveal.js/plugin/highlight/monokai.css">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+      
+      <!-- SLAJD 1: Title Slide -->
+      <section>
+        <h1>Formatowanie i Lintowanie w 2026</h1>
+        <h3>Prettier, Biome, czy ESLint?</h3>
+        <p class="subtitle">Jak optymalizować workflow w erze AI-assisted development</p>
+        <div class="time-impact" style="margin-top: 2em; padding: 1em; background: rgba(255, 68, 68, 0.15); border-radius: 8px; font-size: 0.8em;">
+          <p style="margin: 0.3em 0;">⏱️ <strong>20 commitów × 6 sekund = 2 minuty dziennie</strong></p>
+          <p style="margin: 0.3em 0;">📅 <strong>220 dni roboczych × 2 min = 7.3 godziny rocznie</strong></p>
+          <p style="margin: 0.5em 0; color: #ffd43b; font-weight: bold;">Czy to można naprawić? TAK! 🚀</p>
+        </div>
+        <aside class="notes">
+          Hook: Zacznijmy od liczb. Dwadzieścia commitów dziennie razy sześć sekund to dwie minuty czekania. W skali roku to ponad siedem godzin życia straconego na czekanie.
+          
+          Dzisiaj porozmawiamy o narzędziach do formatowania i lintowania - podstawie naszej pracy. Aktualnie używamy eslint-plugin-prettier. Kluczowe pytanie: czy to nadal najlepsze rozwiązanie? Szczególnie gdy używamy Copilot daily - generujemy więcej kodu i potrzebujemy szybszych narzędzi.
+        </aside>
+      </section>
+
+      <!-- SLAJD 2: Problem Statement -->
+      <section>
+        <h2>Gdzie jesteśmy teraz?</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2em; align-items: center;">
+          <ul class="problem-list" style="margin: 0;">
+            <li>📦 eslint-plugin-prettier</li>
+            <li>🔗 Formatowanie PRZEZ linter</li>
+            <li>⚠️ Konflikty reguł</li>
+            <li>🐌 Pre-commit hook: ~3-6 sekund</li>
+            <li>🤖 Copilot → więcej kodu → więcej czekania</li>
+          </ul>
+          <div style="text-align: center;">
+            <svg width="280" height="240" viewBox="0 0 280 240" style="max-width: 100%;">
+              <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7" fill="#4a9eff" />
+                </marker>
+              </defs>
+              <rect x="40" y="20" width="200" height="50" rx="8" fill="#ff6b6b" stroke="#fff" stroke-width="2"/>
+              <text x="140" y="50" text-anchor="middle" fill="#fff" font-size="16" font-weight="bold">ESLint + Prettier</text>
+              <line x1="140" y1="70" x2="140" y2="100" stroke="#4a9eff" stroke-width="3" marker-end="url(#arrowhead)"/>
+              <rect x="40" y="100" width="200" height="40" rx="8" fill="rgba(255,255,255,0.1)" stroke="#ffd43b" stroke-width="2"/>
+              <text x="140" y="125" text-anchor="middle" fill="#ffd43b" font-size="18" font-weight="bold">⏱️ 3-6 sekund</text>
+              <line x1="140" y1="140" x2="140" y2="170" stroke="#4a9eff" stroke-width="3" marker-end="url(#arrowhead)"/>
+              <rect x="40" y="170" width="200" height="50" rx="8" fill="rgba(255,107,107,0.3)" stroke="#ff6b6b" stroke-width="2" stroke-dasharray="5,5"/>
+              <text x="140" y="195" text-anchor="middle" fill="#fff" font-size="14">Przerwany flow</text>
+              <text x="140" y="212" text-anchor="middle" fill="#ff6b6b" font-size="13">Frustracja</text>
+            </svg>
+          </div>
+        </div>
+        <aside class="notes">
+          Obecny setup: eslint-plugin-prettier uruchamia Prettier jako regułę ESLint. Problemy: konflikty reguł (potrzeba eslint-config-prettier), bugi w autofix (arrow-body-style), overhead wydajnościowy (3-6 sekund), efekt Copilot (więcej kodu = więcej czekania), trudne debugowanie.
+        </aside>
+      </section>
+
+      <!-- SLAJD 3: Fundamentals -->
+      <section>
+        <h2>Najpierw podstawy: Formatter ≠ Linter</h2>
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>Aspekt</th>
+              <th>Formatter (Prettier)</th>
+              <th>Linter (ESLint)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Cel</strong></td>
+              <td>Spójny STYL kodu</td>
+              <td>Wykrywanie BŁĘDÓW</td>
+            </tr>
+            <tr>
+              <td><strong>Przykłady</strong></td>
+              <td>spacje, średniki, długość linii</td>
+              <td>unused variables, missing deps</td>
+            </tr>
+            <tr>
+              <td><strong>Konfiguracja</strong></td>
+              <td>Opinionated (niewiele opcji)</td>
+              <td>Konfigurowalne (setki reguł)</td>
+            </tr>
+            <tr>
+              <td><strong>Auto-fix</strong></td>
+              <td>Zawsze bezpieczny</td>
+              <td>Czasami ryzykowny</td>
+            </tr>
+            <tr>
+              <td><strong>Dla AI</strong></td>
+              <td>Krytyczne (consistency)</td>
+              <td>Ważne (quality)</td>
+            </tr>
+          </tbody>
+        </table>
+        <aside class="notes">
+          Zanim pójdziemy dalej, musimy ustalić fundamentalną różnicę między formatowaniem a lintowaniem. Formatter odpowiada na pytanie "jak kod wygląda?", natomiast Linter na pytanie "czy kod jest poprawny?".
+          
+          W kontekście kodu generowanego przez sztuczną inteligencję: Formatter jest absolutnie krytyczny. Bez niego codebase zamieni się w chaos w ciągu tygodnia. Linter jest bardzo ważny, bo łapie nieużywane importy, brakujące typy i problemy z dostępnością.
+          
+          To są dwa różne problemy, wymagające dwóch różnych narzędzi, z różnymi celami.
+        </aside>
+      </section>
+
+      <section>
+        <h3>Przykłady kodu</h3>
+        <div class="code-comparison">
+          <div class="code-block">
+            <h4>FORMATTER - jak wygląda kod</h4>
+            <pre><code class="typescript">// Przed
+const user={name:"John",age:30};
+
+// Po Prettier
+const user = { name: "John", age: 30 };</code></pre>
+          </div>
+          <div class="code-block">
+            <h4>LINTER - co robi kod</h4>
+            <pre><code class="typescript">const [count, setCount] = useState(0);
+useEffect(() => {
+  console.log(count);
+}); 
+// ❌ ESLint: missing dependency array</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLAJD 4: Landscape 2026 -->
+      <section>
+        <h2>Co nowego w 2026? Rust zmienia wszystko</h2>
+        <div class="two-columns">
+          <div>
+            <h3>Tradycyjny stack (JavaScript)</h3>
+            <ul>
+              <li>Prettier (formatter) + ESLint (linter)</li>
+              <li>Node.js based, single-threaded</li>
+              <li>Dojrzały ekosystem</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Nowe narzędzia (Rust)</h3>
+            <ul>
+              <li><strong>Biome</strong> - all-in-one (format + lint)</li>
+              <li><strong>Oxc</strong> - modularne (Oxfmt + Oxlint)</li>
+              <li>25-50x szybsze</li>
+              <li>Multi-threaded, native binaries</li>
+            </ul>
+          </div>
+        </div>
+        <aside class="notes">
+          Ostatnie dwa lata przyniosły prawdziwą rewolucję w tooling. Narzędzia napisane w Rust mają trzy kluczowe zalety: są kompilowane, a nie interpretowane jak JavaScript, używają wielowątkowości i wykorzystują wszystkie rdzenie procesora, oraz są bardzo wydajne pamięciowo.
+          
+          Biome to jedno narzędzie, które łączy formatowanie i lintowanie w jednym binarnym pliku. Ma dziewięćdziesiąt siedem procent kompatybilności z Prettier.
+          
+          Oxc to najszybsze obecnie dostępne rozwiązanie, modularne, z API do tworzenia własnych reguł. Jest podzielone na Oxfmt do formatowania i Oxlint do lintowania.
+        </aside>
+      </section>
+
+      <section>
+        <h3>Benchmarki LIVE (nasz projekt - 116 plików)</h3>
+        <div class="benchmark-chart">
+          <div class="chart-title">Formatowanie:</div>
+          <div class="chart-bar">
+            <div class="bar-label">Prettier (116 plików):</div>
+            <div class="bar" style="width: 100%;">854ms</div>
+          </div>
+          <div class="chart-bar">
+            <div class="bar-label">Biome (48 plików .ts):</div>
+            <div class="bar biome" style="width: 0.7%;">6ms</div>
+          </div>
+        </div>
+        <p class="highlight" style="font-size: 1.4em; margin: 0.8em 0;">⚡ 142x SZYBCIEJ!</p>
+        <div style="background: rgba(96, 165, 250, 0.15); padding: 1em; border-radius: 8px; margin-top: 1em; font-size: 0.85em;">
+          <p style="margin: 0.3em 0;"><strong>Realne liczby z naszego testu (26.05.2026):</strong></p>
+          <p style="margin: 0.3em 0;">→ Prettier: ~7.3ms na plik</p>
+          <p style="margin: 0.3em 0;">→ Biome: ~0.125ms na plik (58x szybszy per-file!)</p>
+          <p style="margin: 0.5em 0; color: #ffd43b;">✨ <strong>Catch:</strong> Biome formatuje tylko .ts/.json (nie .html/.scss)</p>
+        </div>
+        <aside class="notes">
+          To są REALNE wyniki z naszego live testu z wczoraj! Projekt: sto szesnaście plików Angular. Prettier: osiemset pięćdziesiąt cztery milisekundy dla wszystkich plików. Biome: sześć milisekund dla czterdziestu ośmiu plików TypeScript. To jest sto czterdzieści dwa razy szybciej!
+          
+          Catch: Biome nie formatuje HTML i SCSS - tylko TypeScript i JSON. Więc potrzebujemy hybrydowego podejścia: Biome dla TS (ultra szybko), Prettier dla HTML i SCSS. Razem: około czterystu milisekund zamiast osiemset pięćdziesięciu - wciąż ponad dwa razy szybciej!
+        </aside>
+      </section>
+
+      <!-- SLAJD 5: Pytanie 1 -->
+      <section>
+        <h2>Pytanie 1: Prettier czy Biome (czy coś innego)?</h2>
+        <div class="decision-matrix">
+          <h3>Kryteria decyzyjne:</h3>
+          <ol>
+            <li>⚡ Prędkość vs 🔌 Ekosystem</li>
+            <li>🎯 Prostota vs 🛠️ Elastyczność</li>
+            <li>🏗️ Dojrzałość vs 🚀 Innowacja</li>
+            <li>🅰️ Angular-specific needs</li>
+          </ol>
+        </div>
+        <aside class="notes">
+          Pierwsze kryterium to prędkość versus ekosystem. Musimy zadać sobie pytanie: czy wolne narzędzia to realny problem dla nas? Pamiętajmy, że Angular wymaga specyficznych pluginów jak at angular-eslint czy eslint-plugin-rxjs.
+          
+          Drugie kryterium to prostota versus elastyczność. Biome to jedno narzędzie, jeden plik konfiguracyjny. Prettier z ESLint to dwa narzędzia i dwa do trzech plików konfiguracyjnych.
+          
+          Trzecie kryterium to dojrzałość versus innowacja. Prettier ma osiem lat, ESLint trzynaście lat - wszystkie edge cases są znane. Biome ma dwa lata stabilnej wersji - jest mniej przetestowany w boju, ale aktywnie rozwijany.
+          
+          Czwarte kryterium, które jest kluczowe dla nas, to specyficzne wymagania Angular.
+        </aside>
+      </section>
+
+      <section>
+        <h3>Decision Tree: Co wybrać?</h3>
+        <svg width="900" height="400" viewBox="0 0 900 400" style="max-width: 100%; margin: 1em auto; display: block;">
+          <defs>
+            <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#4a9eff" />
+            </marker>
+          </defs>
+          <!-- Start -->
+          <rect x="350" y="10" width="200" height="50" rx="8" fill="#4a9eff" stroke="#fff" stroke-width="2"/>
+          <text x="450" y="40" text-anchor="middle" fill="#fff" font-size="16" font-weight="bold">Angular Projekt?</text>
+          
+          <!-- Question 1 -->
+          <line x1="450" y1="60" x2="300" y2="110" stroke="#4a9eff" stroke-width="2" marker-end="url(#arrow)"/>
+          <line x1="450" y1="60" x2="600" y2="110" stroke="#4a9eff" stroke-width="2" marker-end="url(#arrow)"/>
+          
+          <rect x="200" y="110" width="200" height="60" rx="8" fill="rgba(255,255,255,0.1)" stroke="#ffd43b" stroke-width="2"/>
+          <text x="300" y="135" text-anchor="middle" fill="#fff" font-size="14">Potrzebujesz</text>
+          <text x="300" y="155" text-anchor="middle" fill="#fff" font-size="14">Angular rules?</text>
+          
+          <rect x="500" y="110" width="200" height="60" rx="8" fill="rgba(81,207,102,0.2)" stroke="#51cf66" stroke-width="2"/>
+          <text x="600" y="135" text-anchor="middle" fill="#51cf66" font-size="15" font-weight="bold">✓ Biome</text>
+          <text x="600" y="155" text-anchor="middle" fill="#999" font-size="12">Prosty projekt</text>
+          
+          <!-- Yes path -->
+          <line x1="300" y1="170" x2="150" y2="240" stroke="#4a9eff" stroke-width="2" marker-end="url(#arrow)"/>
+          <text x="200" y="205" fill="#51cf66" font-size="13">TAK</text>
+          
+          <rect x="20" y="240" width="260" height="80" rx="8" fill="rgba(81,207,102,0.2)" stroke="#51cf66" stroke-width="2"/>
+          <text x="150" y="265" text-anchor="middle" fill="#51cf66" font-size="15" font-weight="bold">✓ Hybrid (Tier 2)</text>
+          <text x="150" y="285" text-anchor="middle" fill="#fff" font-size="12">Biome = formatowanie</text>
+          <text x="150" y="302" text-anchor="middle" fill="#fff" font-size="12">ESLint = lintowanie + Angular</text>
+          
+          <!-- No path -->
+          <line x1="300" y1="170" x2="450" y2="240" stroke="#4a9eff" stroke-width="2" marker-end="url(#arrow)"/>
+          <text x="350" y="205" fill="#ff6b6b" font-size="13">NIE</text>
+          
+          <rect x="320" y="240" width="260" height="80" rx="8" fill="rgba(255,255,255,0.1)" stroke="#4a9eff" stroke-width="2"/>
+          <text x="450" y="265" text-anchor="middle" fill="#4a9eff" font-size="15" font-weight="bold">Prettier + ESLint</text>
+          <text x="450" y="285" text-anchor="middle" fill="#fff" font-size="12">Rozdzielone (Tier 1)</text>
+          <text x="450" y="302" text-anchor="middle" fill="#999" font-size="11">Sprawdzone, stabilne</text>
+          
+          <!-- Cutting edge -->
+          <rect x="620" y="240" width="260" height="80" rx="8" fill="rgba(255,212,59,0.2)" stroke="#ffd43b" stroke-width="2"/>
+          <text x="750" y="265" text-anchor="middle" fill="#ffd43b" font-size="15" font-weight="bold">🚀 Oxc + ESLint (Tier 3)</text>
+          <text x="750" y="285" text-anchor="middle" fill="#fff" font-size="12">Najszybsze</text>
+          <text x="750" y="302" text-anchor="middle" fill="#999" font-size="11">Dla early adopters</text>
+          
+          <!-- Legend -->
+          <text x="450" y="370" text-anchor="middle" fill="#999" font-size="13">💡 Dla większości projektów Angular: <tspan fill="#51cf66" font-weight="bold">Hybrid (Tier 2)</tspan></text>
+        </svg>
+        <aside class="notes">
+          Decision tree pokazuje logiczny wybór. Dla Angular z wymaganymi regułami: Hybrid - Biome do formatowania, ESLint do lintowania. Dla projektów bez Angular-specific needs: samo Biome lub Prettier plus ESLint rozdzielone. Dla early adopters: Oxc.
+        </aside>
+      </section>
+
+      <!-- SLAJD 6: Pytanie 2 -->
+      <section>
+        <h2>Pytanie 2: Osobno czy razem? (Separacja tools)</h2>
+        <div class="options-grid">
+          <div class="option">
+            <h3>Opcja A: Razem</h3>
+            <pre><code class="bash">eslint --fix  # Prettier w środku</code></pre>
+            <div class="pros-cons">
+              <p class="pro">✅ Jedna komenda</p>
+              <p class="con">❌ Konflikty, overhead, trudne debugowanie</p>
+            </div>
+          </div>
+          <div class="option">
+            <h3>Opcja B: Osobno</h3>
+            <pre><code class="bash">prettier --write .
+eslint --fix .</code></pre>
+            <div class="pros-cons">
+              <p class="pro">✅ Jasny separation of concerns</p>
+              <p class="pro">✅ Lepsze error messages</p>
+              <p class="con">❌ Dwie komendy (ale Husky to rozwiąże)</p>
+            </div>
+          </div>
+          <div class="option">
+            <h3>Opcja C: Jedno narzędzie</h3>
+            <pre><code class="bash">biome check --write .</code></pre>
+            <div class="pros-cons">
+              <p class="pro">✅ Zero konfliktów</p>
+              <p class="con">❌ Ograniczony ekosystem (Angular problem)</p>
+            </div>
+          </div>
+        </div>
+        <aside class="notes">
+          Drugie pytanie dotyczy integracji narzędzi. Czy lepiej uruchamiać je razem czy osobno?
+          
+          Opcja A, integracja, ma problemy. Po pierwsze, konflikty reguł - potrzebujemy eslint-config-prettier żeby je wyłączyć. Po drugie, overhead wydajnościowy - wszystko działa od dwudziestu do czterdziestu procent wolniej. Po trzecie, debugowanie to koszmar - nie wiesz co jest przyczyną błędu. Po czwarte, znane bugi - na przykład arrow-body-style z Prettier może generować niepoprawny kod.
+          
+          Opcja B, separacja, ma zalety. Po pierwsze, prawdziwe rozdzielenie odpowiedzialności. Po drugie, możesz uruchomić tylko jedno narzędzie jeśli potrzebujesz. Po trzecie, lepsze komunikaty błędów. Po czwarte, możesz użyć różnych narzędzi do różnych zadań.
+          
+          Dla Angular moja rekomendacja to separacja - Opcja B.
+        </aside>
+      </section>
+
+      <!-- SLAJD 7: Pytanie 3 - Husky -->
+      <section>
+        <h2>Pytanie 3: Czy Husky eliminuje problem separacji?</h2>
+        <div class="husky-setup">
+          <h3>Husky v9 (2026) + lint-staged</h3>
+          <ul class="feature-list">
+            <li>🎣 Git hooks automation</li>
+            <li>📦 Auto-setup (<code>npx husky init</code>)</li>
+            <li>⚡ Tylko staged files (szybko)</li>
+            <li>🚫 Blokuje commit jeśli fail</li>
+          </ul>
+        </div>
+        <aside class="notes">
+          Trzecie pytanie: czy Husky eliminuje problem separacji narzędzi? Odpowiedź brzmi: nie całkowicie, ale prawie.
+          
+          Husky to manager git hooks. Hooks to skrypty, które uruchamiają się przy zdarzeniach git, na przykład przed commitem.
+          
+          Husky w wersji dziewiątej z roku dwa tysiące dwadzieścia sześć to zwykłe shell scripts w folderze kropka husky, z automatycznym setup dla całego zespołu. Wystarczy uruchomić npx husky init.
+          
+          Lint-staged to narzędzie, które uruchamia komendy tylko na plikach staged do commita.
+          
+          Porównajmy czasy wykonania. Bez Husky: sześć i pół sekundy dla dwustu pięćdziesięciu plików. Z Husky i lint-staged: około dwustu osiemdziesięciu milisekund dla pięciu plików - to jest dwadzieścia trzy razy szybciej. Z Biome lub Oxc: około stu dwudziestu milisekund - to jest pięćdziesiąt cztery razy szybciej.
+        </aside>
+      </section>
+
+      <section>
+        <h3>Setup + Flow</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2em; align-items: start;">
+          <div>
+            <pre><code class="bash"># .husky/pre-commit
+npx lint-staged</code></pre>
+            <pre><code class="json">// package.json
+{
+  "lint-staged": {
+    "*.{ts,html,scss}": ["prettier --write"],
+    "*.ts": ["eslint --fix"]
+  }
+}</code></pre>
+          </div>
+          <svg width="300" height="280" viewBox="0 0 300 280" style="max-width: 100%;">
+            <defs>
+              <marker id="flow-arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" fill="#51cf66" />
+              </marker>
+            </defs>
+            <rect x="50" y="10" width="200" height="45" rx="8" fill="rgba(74,158,255,0.2)" stroke="#4a9eff" stroke-width="2"/>
+            <text x="150" y="38" text-anchor="middle" fill="#fff" font-size="15" font-weight="bold">git commit</text>
+            
+            <line x1="150" y1="55" x2="150" y2="75" stroke="#51cf66" stroke-width="3" marker-end="url(#flow-arrow)"/>
+            
+            <rect x="50" y="75" width="200" height="45" rx="8" fill="rgba(81,207,102,0.2)" stroke="#51cf66" stroke-width="2"/>
+            <text x="150" y="103" text-anchor="middle" fill="#51cf66" font-size="15" font-weight="bold">🎣 Husky hook</text>
+            
+            <line x1="150" y1="120" x2="150" y2="140" stroke="#51cf66" stroke-width="3" marker-end="url(#flow-arrow)"/>
+            
+            <rect x="50" y="140" width="200" height="45" rx="8" fill="rgba(255,212,59,0.2)" stroke="#ffd43b" stroke-width="2"/>
+            <text x="150" y="168" text-anchor="middle" fill="#ffd43b" font-size="15" font-weight="bold">⚡ lint-staged</text>
+            
+            <line x1="150" y1="185" x2="150" y2="205" stroke="#51cf66" stroke-width="3" marker-end="url(#flow-arrow)"/>
+            
+            <rect x="50" y="205" width="200" height="65" rx="8" fill="rgba(81,207,102,0.3)" stroke="#51cf66" stroke-width="2"/>
+            <text x="150" y="228" text-anchor="middle" fill="#fff" font-size="13">✓ Format (prettier/biome)</text>
+            <text x="150" y="245" text-anchor="middle" fill="#fff" font-size="13">✓ Lint (eslint)</text>
+            <text x="150" y="262" text-anchor="middle" fill="#51cf66" font-size="14" font-weight="bold">→ Commit OK!</text>
+          </svg>
+        </div>
+        <p class="highlight" style="margin-top: 1em;">Rezultat: 2 komendy → 0 komend (automatyczne)</p>
+        <aside class="notes">
+          Flow: git commit → Husky wywołuje pre-commit → lint-staged na staged files → prettier + eslint → jeśli OK: commit, jeśli błąd: BLOCK.
+          
+          Korzyści: spójność w zespole, blokowanie złego kodu, ochrona przed Copilot, opcja bypass (--no-verify).
+        </aside>
+      </section>
+
+      <!-- SLAJD 8: Pytanie 4 - AI-First -->
+      <section>
+        <h2>Pytanie 4: Jak AI-first zmienia zasady gry?</h2>
+        <div class="ai-impact">
+          <h3>Copilot Daily = Nowe Wymagania</h3>
+          <ul class="impact-list">
+            <li>🤖 Więcej kodu, szybciej generowanego</li>
+            <li>🎨 Różne style (AI nie zna naszego guide)</li>
+            <li>⚡ Natychmiastowy feedback needed</li>
+            <li>🔄 Continuous consistency enforcement</li>
+          </ul>
+        </div>
+        <aside class="notes">
+          Ostatnie i najważniejsze pytanie: jak Copilot zmienia całą tę dyskusję?
+          
+          Copilot na co dzień to realia. W typowym dniu pracy: trzydzieści procent kodu piszemy ręcznie, pięćdziesiąt procent generuje Copilot, dwadzieścia procent kopiujemy z innych źródeł. To fundamentalna zmiana w porównaniu do sytuacji sprzed pięciu lat, gdy sto procent kodu pisaliśmy ręcznie.
+          
+          Problemy z kodem generowanym przez AI. Po pierwsze, niespójny styl - raz pojedyncze, raz podwójne cudzysłowy, różne odstępy. Po drugie, więcej kodu oznacza więcej do sprawdzenia - dziesięć plików na godzinę zamiast trzech. Po trzecie, problemy z jakością - brakujące unsubscribe w RxJS, nieużywane importy, brak obsługi błędów.
+        </aside>
+      </section>
+
+      <section>
+        <h3>Key Insights: Jak AI zmienia wymagania</h3>
+        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.5em; align-items: start; font-size: 0.75em;">
+          <div class="key-insights" style="grid-template-columns: 1fr; font-size: 1em;">
+            <div class="insight">
+              <h4>1. Prędkość = Krytyczna</h4>
+              <p>Copilot 2s + lint 6s = bottleneck</p>
+            </div>
+            <div class="insight">
+              <h4>2. Formatter > Linter</h4>
+              <p>Bez formattera: chaos w tydzień</p>
+            </div>
+            <div class="insight">
+              <h4>3. Auto-format on save</h4>
+              <p>Copilot → save → format → ✓</p>
+            </div>
+            <div class="insight">
+              <h4>4. Nowe narzędzia AI</h4>
+              <p>Ultracite, agent hooks</p>
+            </div>
+          </div>
+          <div style="background: rgba(255,255,255,0.05); padding: 1em; border-radius: 8px;">
+            <h4 style="margin: 0 0 0.5em 0; color: #ff6b6b; font-size: 0.95em;">❌ Przed (Prettier+ESLint)</h4>
+            <p style="margin: 0.2em 0; font-size: 0.9em;">⏱️ Pre-commit: 3-6s</p>
+            <p style="margin: 0.2em 0; font-size: 0.9em;">😤 Przerwany flow</p>
+            <p style="margin: 0.2em 0; font-size: 0.9em;">🐌 20 commitów = 2 min</p>
+            <hr style="border: 1px solid rgba(255,255,255,0.1); margin: 0.8em 0;">
+            <h4 style="margin: 0 0 0.5em 0; color: #51cf66; font-size: 0.95em;">✅ Po (Biome+ESLint)</h4>
+            <p style="margin: 0.2em 0; font-size: 0.9em;">⚡ Pre-commit: 200-400ms</p>
+            <p style="margin: 0.2em 0; font-size: 0.9em;">😊 Smooth flow</p>
+            <p style="margin: 0.2em 0; font-size: 0.9em;">🚀 20 commitów = 8s</p>
+            <p style="margin: 0.5em 0 0 0; color: #ffd43b; font-weight: bold; font-size: 1em;">💰 Oszczędność: 112s/dzień!</p>
+          </div>
+        </div>
+        <aside class="notes">
+          Pierwszy insight: prędkość jest absolutnie krytyczna. Przed erą Copilot, sześć sekund na lint było akceptowalne. Ale teraz to jest bottleneck. Dlaczego? Bo Copilot generuje kod w dwie sekundy, a potem czekasz sześć sekund na lint. To przerywa flow. Z szybkimi narzędziami jak Biome mamy dwie sekundy na Copilot plus sto dwadzieścia milisekund na lint - to jest płynne i prawie niezauważalne. Copilot nas przyspiesza, ale wolne narzędzia nas spowalniają.
+          
+          Drugi insight: formatter jest ważniejszy niż linter - przynajmniej jako priorytet. Copilot generuje kod w różnych stylach - raz single quotes, raz double, różne spacingi. Bez formattera codebase zmienia się w chaos w tydzień. Proponuję strategię trzech poziomów: formatowanie przy każdym save i commit - szybkie, z Biome. Lintowanie przy commit - ESLint z regułami Angular. I deep linting przy push lub w CI - pełny zestaw reguł.
+          
+          Trzeci insight: auto-format on save jest niezbędny. W edytorze ustawiamy formatOnSave na true. Wtedy flow wygląda tak: Copilot generuje kod, zapisujesz, auto-format działa, i masz spójny kod. Bez tego każdy fragment kodu z Copilot wygląda inaczej.
+          
+          Czwarty insight: nowe narzędzia dla AI. Ultracite generuje reguły dla AI agents - Copilot je czyta i generuje lepiej dopasowany kod. Agent hooks automatycznie formatują po każdej edycji przez AI. Sentrux monitoruje architekturę w real-time, bo AI generuje dużo kodu szybko i łatwo o architectural drift.
+          
+          Konkretne liczby przed i po. Przed: od trzech do sześciu sekund razy dwadzieścia commitów daje dwie minuty dziennie, czyli siedem i trzy dziesiąte godziny rocznie. Po optymalizacji: od dwustu do czterystu milisekund razy dwadzieścia commitów to tylko osiem sekund dziennie, czyli dwadzieścia dziewięć minut rocznie. Oszczędność to sto dwanaście sekund każdego dnia plus zero frustracji i przerwanych flow states.
+          
+          To nie jest "nice to have" optimization. To jest fundamentalna zmiana sposobu pracy z kodem w erze sztucznej inteligencji.
+        </aside>
+      </section>
+
+      <!-- SLAJD 9: Rekomendacje -->
+      <section>
+        <h2>Rekomendacje</h2>
+        <p style="font-size: 0.85em; margin-bottom: 1.5em; color: #999;">Trzy poziomy optymalizacji - od podstawowych ulepszeń do zaawansowanych rozwiązań</p>
+        <div class="recommendations">
+          <div class="tier tier-1">
+            <h3>Poziom 1: Podstawy</h3>
+            <p style="font-size: 0.75em; color: #51cf66; margin: 0.3em 0;">⏱️ Setup: 1-2h | Ryzyko: bardzo niskie</p>
+            <ul>
+              <li>✅ Rozdziel Prettier i ESLint</li>
+              <li>✅ Dodaj Husky + lint-staged</li>
+              <li>✅ Editor: format on save</li>
+            </ul>
+            <p class="impact">Rezultat: 2-3x szybszy pre-commit</p>
+          </div>
+          <div class="tier tier-2">
+            <h3>Poziom 2: Optymalizacja</h3>
+            <p style="font-size: 0.75em; color: #4a9eff; margin: 0.3em 0;">⏱️ Setup: 4-8h | Ryzyko: niskie ⭐ Rekomendowane</p>
+            <ul>
+              <li>✅ Wszystko z Poziomu 1 +</li>
+              <li>✅ Biome dla formatowania (.ts)</li>
+              <li>✅ ESLint dla Angular rules</li>
+              <li>✅ ESLint --cache</li>
+            </ul>
+            <p class="impact">Rezultat: 5-10x szybszy workflow</p>
+          </div>
+          <div class="tier tier-3">
+            <h3>Poziom 3: Zaawansowany</h3>
+            <p style="font-size: 0.75em; color: #ffd43b; margin: 0.3em 0;">⏱️ Setup: 1-2 dni | Ryzyko: średnie</p>
+            <ul>
+              <li>✅ Wszystko z Poziomu 2 +</li>
+              <li>✅ Oxc pre-check w CI</li>
+              <li>✅ Ultracite (AI agent rules)</li>
+              <li>✅ Sentrux (monitoring)</li>
+            </ul>
+            <p class="impact">Rezultat: 10-20x, future-proof</p>
+          </div>
+        </div>
+        <!-- <div style="margin-top: 1.5em; padding: 1em; background: rgba(74,158,255,0.15); border-radius: 8px; font-size: 0.8em;">
+          <p style="margin: 0.3em 0;"><strong>Dla większości zespołów Angular:</strong> Start z Poziomem 1 (teraz) → Poziom 2 (miesiąc) → Ewaluacja Poziomu 3 (3 miesiące)</p>
+        </div> -->
+        <aside class="notes">
+          Przedstawiam trzy POZIOMY optymalizacji - od najprostszych do najbardziej zaawansowanych:
+          
+          POZIOM 1 - PODSTAWY (1-2h setup, bardzo niskie ryzyko):
+          To fundamentalne ulepszenia, które każdy zespół powinien wdrożyć. Rozdzielamy Prettier i ESLint (usuwamy plugin), dodajemy Husky z lint-staged dla automatyzacji, włączamy format on save w edytorze. Rezultat: pre-commit 2-3 razy szybszy, zero konfliktów, lepsze error messages. Ryzyko minimalne - używamy sprawdzonych narzędzi.
+          
+          POZIOM 2 - OPTYMALIZACJA (4-8h setup, niskie ryzyko) - REKOMENDOWANY:
+          Budujemy na Poziomie 1. Zamieniamy Prettier na Biome tylko dla plików TypeScript (142 razy szybciej!), zachowujemy Prettier dla HTML i SCSS. ESLint używamy tylko do lintowania z Angular rules, dodajemy flagę --cache. Rezultat: workflow 5-10 razy szybszy, idealne dla Copilot daily. To sweet spot dla większości zespołów Angular.
+          
+          POZIOM 3 - ZAAWANSOWANY (1-2 dni setup, średnie ryzyko):
+          Dla zespołów chcących maksymalnej wydajności. Dodajemy Oxc w CI dla ultra szybkiego feedback, Ultracite generuje reguły dla AI agents (lepszy kod z Copilot), Sentrux monitoruje architekturę. Rezultat: 10-20 razy szybszy, przygotowane na przyszłość. Dla dużych zespołów z intensywnym użyciem Copilot.
+          
+          STRATEGIA WDROŻENIA:
+          Rekomendujemy podejście stopniowe - najpierw Poziom 1 od razu (niskie ryzyko, szybkie wygrane), po miesiącu Poziom 2 (sprawdzone korzyści), po 3 miesiącach ewaluacja Poziomu 3. Zespół podejmuje ostateczną decyzję na podstawie własnych potrzeb i appetite na ryzyko.
+        </aside>
+      </section>
+
+      <!-- Final Slide -->
+      <section>
+        <!-- <h1>Koniec prezentacji</h1>
+        <p style="font-size: 1.2em; color: #999; margin-top: 2em;">Dziękuję za uwagę</p> -->
+      </section>
+
+    </div>
+  </div>
+  <script type="module" src="/main.js"></script>
+</body>
+</html>

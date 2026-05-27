@@ -1,0 +1,23 @@
+<div class="container">
+  <h2>OrdersItem4 Component</h2>
+
+  <div *ngIf="loading" class="loading">
+    <span class="spinner"></span>
+    Loading...
+  </div>
+
+  <div *ngIf="error" class="error">
+    {{ error }}
+  </div>
+
+  <div *ngIf="!loading && !error" class="content">
+    <button (click)="refresh()" class="btn btn-primary">Refresh</button>
+
+    <ul class="item-list">
+      <li *ngFor="let item of data; trackBy: item.id" (click)="onItemClick(item)" class="item">
+        <strong>{{ item.name }}</strong>
+        <p>{{ item.description }}</p>
+      </li>
+    </ul>
+  </div>
+</div>
